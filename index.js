@@ -1,4 +1,4 @@
-const Firestore = require("@google-cloud/firestore")
+const Firestore = require("firebase-admin")
 
 const db = new Firestore()
 

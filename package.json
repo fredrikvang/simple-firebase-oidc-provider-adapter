@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/fredrikvang/simple-firebase-oidc-provider-adapter#readme",
   "dependencies": {
-    "@google-cloud/firestore": "^4.9.2"
+    "firebase-admin": "^9.4.2"
   },
   "devDependencies": {}
 }
