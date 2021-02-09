@@ -1,4 +1,4 @@
-const Firestore = require("firebase-admin")
+const Firestore = require("@google-cloud/firestore")
 
 const db = new Firestore()
 
@@ -8,24 +8,9 @@ class FirestoreAdapter {
   }
 
   async destroy(id) {
-    const batch = db.batch()
-    await this._batched_destroy(id, batch)
-    await batch.commit()
+    await db.collection(this.model).doc(id).delete()
   }
 
-  async _batched_destroy(id, batch) {
-    const doc = await db.collection(this.model).doc(id).get()
-    if (doc.exists) {
-      const data = await doc.data()
-      if (data.userCode) {
-        batch.delete(db.collection(this.model).doc("userCode::" + data.userCode))
-      }
-      if (data.uid) {
-        batch.delete(db.collection(this.model).doc("uid::" + data.uid))
-      }
-      batch.delete(db.collection(this.model).doc(id))
-    }
-  }
 
   async consume(id) {
     const doc = await db.collection(this.model).doc(id).get()
@@ -47,50 +32,45 @@ class FirestoreAdapter {
   }
 
   async findByUid(uid) {
-    const doc = await db
-      .collection(this.model)
-      .doc("uid::" + uid)
-      .get()
-    if (!doc.exists) return undefined
-    const data = await doc.data()
-    return this.find(data.id)
+    const snapshot = await db.collection(this.model).where('uid', '==', userCode).get()
+    if (snapshot.empty) {
+      return undefined
+    } else {
+      if (snapshot.size !== 1) {
+        console.warn(`Querying ${this.model} for userCode ${uid} returned ${snapshot.size} items (instead of exactly 1)`)
+      }
+      return snapshot.docs[0].data
+    }
   }
 
   async findByUserCode(userCode) {
-    const doc = await db
-      .collection(this.model)
-      .doc("userCode::" + userCode)
-      .get()
-    if (!doc.exists) return undefined
-    const data = await doc.data()
-    return this.find(data.id)
+    const snapshot = await db.collection(this.model).where('userCode', '==', userCode).get()
+    if (snapshot.empty) {
+      return undefined
+    } else {
+      if (snapshot.size !== 1) {
+        console.warn(`Querying ${this.model} for userCode ${userCode} returned ${snapshot.size} items (instead of exactly 1)`)
+      }
+      return snapshot.docs[0].data
+    }
   }
 
   async upsert(id, payload, expiresIn) {
-    const batch = db.batch()
-    batch.set(db.collection(this.model).doc(id), {
+    await db.collection(this.model).doc(id).set({
       ...payload,
       __expiry: Date.now() + expiresIn * 1000,
     })
-    if (payload.uid) {
-      batch.set(db.collection(this.model).doc("uid::" + payload.uid), { id })
-    }
-    if (payload.userCode) {
-      batch.set(db.collection(this.model).doc("userCode::" + payload.userCode), {
-        id,
-      })
-    }
-    batch.commit()
   }
 
   async revokeByGrantId(grantId) {
-    const coll = await db
+
+    const snapshot = await db
       .collection(this.model)
       .where("grantId", "==", grantId)
       .get()
-    const ids = coll.map((x) => x.id)
+    const ids = snapshot.docs.map((x) => x.id)
     const batch = db.batch()
-    for (id of ids) this._batched_destroy(id, batch)
+    for (id of ids) batch.delete(db.collection(this.collection).doc(id))
     await batch.commit()
   }
 
