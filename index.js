@@ -4,7 +4,7 @@ const db = new Firestore()
 
 class FirestoreAdapter {
   constructor(model) {
-    this.model = `oicd-provider-${model}`
+    this.model = `oidc-provider-${model}`
   }
 
   async destroy(id) {
@@ -32,7 +32,7 @@ class FirestoreAdapter {
   }
 
   async findByUid(uid) {
-    const snapshot = await db.collection(this.model).where('uid', '==', userCode).get()
+    const snapshot = await db.collection(this.model).where('uid', '==', uid).get()
     if (snapshot.empty) {
       return undefined
     } else {
