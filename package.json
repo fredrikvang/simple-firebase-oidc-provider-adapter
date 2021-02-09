@@ -1,6 +1,6 @@
 {
   "name": "@fredrikvang/simple-firebase-oidc-provider-adapter",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "Simple oidc-provider adapter to use firebase/firestore (for apps deployed on Google Cloud Platform).",
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,8 @@
   },
   "keywords": [
     "GCP",
+    "GAE",
+    "google cloud platform",
     "oidc",
     "openid",
     "firebase",
